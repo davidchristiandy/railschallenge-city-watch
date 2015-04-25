@@ -1,25 +1,37 @@
 class RespondersController < ApplicationController
+
+  skip_before_action :resource_not_found, only: [:index]
+
+  def index
+    show = params[:show]
+    if show.present?
+      response = {
+        capacity: {
+          'Fire' => Responder.get_capacity_array('Fire'),
+          'Police' => Responder.get_capacity_array('Police'),
+          'Medical' => Responder.get_capacity_array('Medical')
+        }
+      }
+    else
+      response = Responder.all_hash
+    end
+
+    render json: response, status: :ok
+  end
+
   # gets responder record by :name
   def show
     record = Responder.find_by(name: params[:id])
     return resource_not_found unless record.present?
 
-    render json: { responder: record }, status: :ok
+    render json: record.hash_form, status: :ok
   end
 
   def create
     status = :created
     record = Responder.new(responder_params)
     if record.save
-      response = {
-        responder: {
-          emergency_code: nil,
-          type: record.type,
-          name: record.name,
-          capacity: record.capacity,
-          on_duty: record.on_duty
-        }
-      }
+      response = record.hash_form
     else
       status = :unprocessable_entity
       response = { message: record.errors }
@@ -35,15 +47,7 @@ class RespondersController < ApplicationController
     record = Responder.find_by(name: params[:id])
     return resource_not_found unless record.present?
     if record.update(responder_update_params)
-      response = {
-        responder: {
-          emergency_code: record.emergency_code,
-          type: record.type,
-          name: record.name,
-          capacity: record.capacity,
-          on_duty: record.on_duty
-        }
-      }
+      response = record.hash_form
     else
       status = :unprocessable_entity
       response = { message: record.errors }

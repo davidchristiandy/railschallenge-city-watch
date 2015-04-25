@@ -1,4 +1,13 @@
 class EmergenciesController < ApplicationController
+  def index
+
+    response = {
+      emergencies: Emergency.all,
+      full_responses: Emergency.full_responses
+    }
+    render json: response, status: :ok
+  end
+
   def show
     record = Emergency.find_by(code: params[:id])
     return resource_not_found unless record.present?
