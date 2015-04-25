@@ -4,4 +4,9 @@ class Responder < ActiveRecord::Base
   validates :type, presence: true
   validates :capacity, presence: true, inclusion: { in: [1, 2, 3, 4, 5] }
   belongs_to :emergency
+
+  def emergency_code
+    return emergency.code if emergency.present?
+    nil
+  end
 end

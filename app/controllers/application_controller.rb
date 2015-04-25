@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::Base
-  before_action :page_not_found, only: [:new, :edit, :destroy]
+  before_action :resource_not_found, only: [:new, :edit, :destroy]
 
   def new
   end
@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def page_not_found
+  def resource_not_found
     render json: { message: 'page not found' }, status: :not_found
   end
 end
