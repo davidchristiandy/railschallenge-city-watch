@@ -1,6 +1,5 @@
 class EmergenciesController < ApplicationController
   def index
-
     response = {
       emergencies: Emergency.all,
       full_responses: Emergency.full_responses
@@ -12,14 +11,14 @@ class EmergenciesController < ApplicationController
     record = Emergency.find_by(code: params[:id])
     return resource_not_found unless record.present?
 
-    render json: { emergency: record }, status: :ok
+    render json: record.hash_form, status: :ok
   end
 
   def create
     status = :created
     record = Emergency.new(emergency_params)
     if record.save
-      response = { emergency: record }
+      response = record.hash_form
     else
       status = :unprocessable_entity
       response = { message: record.errors }
@@ -35,8 +34,8 @@ class EmergenciesController < ApplicationController
     record = Emergency.find_by(code: params[:id])
     return resource_not_found unless record.present?
 
-    if record.update(emergency_update_params)
-      response = { emergency: record }
+    if record.update!(emergency_update_params)
+      response = record.hash_form
     else
       status = :unprocessable_entity
       response = { message: record.errors }

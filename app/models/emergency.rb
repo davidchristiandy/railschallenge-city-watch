@@ -3,22 +3,29 @@ class Emergency < ActiveRecord::Base
   validates :fire_severity, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :police_severity, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :medical_severity, presence: true, numericality: { greater_than_or_equal_to: 0 }
+
   has_many :responders
 
-  after_create :assign_available_responders
+  # TODO: change this to after save to handle update actions
+  after_create :assign_available_responders!
+  before_update :reassign_responders!
 
   def self.full_responses
-    emergencies, full_response = all, 0
+    emergencies, full = all, 0
     emergencies.each do |x|
-      full_response += 1 if x.all_severities_fulfilled?
+      full += 1 if x.full_response
     end
 
-    [full_response, emergencies.length]
+    [full, emergencies.size]
+  end
+
+  def responder_names
+    responders.map(&:name) || []
   end
 
   def fire_severity_fulfilled?
     assigned_capacity = 0
-    responders.where(type: 'Fire').each do |x|
+    responders.where(type: 'Fire').find_each do |x|
       assigned_capacity += x.capacity
     end
 
@@ -27,7 +34,7 @@ class Emergency < ActiveRecord::Base
 
   def medical_severity_fulfilled?
     assigned_capacity = 0
-    responders.where(type: 'Medical').each do |x|
+    responders.where(type: 'Medical').find_each do |x|
       assigned_capacity += x.capacity
     end
 
@@ -36,7 +43,7 @@ class Emergency < ActiveRecord::Base
 
   def police_severity_fulfilled?
     assigned_capacity = 0
-    responders.where(type: 'Police').each do |x|
+    responders.where(type: 'Police').find_each do |x|
       assigned_capacity += x.capacity
     end
 
@@ -49,8 +56,44 @@ class Emergency < ActiveRecord::Base
       police_severity_fulfilled?
   end
 
-  # TODO: implement dispatchers
-  def assign_available_responders
-    available_responders = Responder.available_responders
+  def hash_form
+    {
+      emergency: {
+        code: code,
+        fire_severity: fire_severity,
+        police_severity: police_severity,
+        medical_severity: medical_severity,
+        resolved_at: resolved_at,
+        responders: responder_names,
+        full_response: all_severities_fulfilled?
+      }
+    }
+  end
+
+  def severities_changed?
+    fire_severity_changed? ||
+      police_severity_changed? ||
+      medical_severity_changed?
+  end
+
+  def assign_available_responders!
+    return if resolved_at.present?
+    assigned = []
+    assigned << Responder.request_responders_for('Fire', fire_severity)
+    assigned << Responder.request_responders_for('Police', police_severity)
+    assigned << Responder.request_responders_for('Medical', medical_severity)
+
+    assigned.flatten.each do |x|
+      next unless x.present?
+      responders << x
+    end
+
+    update_column :full_response, all_severities_fulfilled?
+  end
+
+  def reassign_responders!
+    responders.delete_all
+    return if resolved_at.present?
+    assign_available_responders!
   end
 end

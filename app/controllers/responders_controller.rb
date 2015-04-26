@@ -1,5 +1,4 @@
 class RespondersController < ApplicationController
-
   skip_before_action :resource_not_found, only: [:index]
 
   def index
