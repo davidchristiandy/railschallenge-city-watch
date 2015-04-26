@@ -69,12 +69,6 @@ class Emergency < ActiveRecord::Base
     }
   end
 
-  def severities_changed?
-    fire_severity_changed? ||
-      police_severity_changed? ||
-      medical_severity_changed?
-  end
-
   def severities_hash
     {
       'Fire' => fire_severity,
