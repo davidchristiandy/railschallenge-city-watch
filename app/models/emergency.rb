@@ -76,12 +76,20 @@ class Emergency < ActiveRecord::Base
       medical_severity_changed?
   end
 
+  def severities_hash
+    {
+      'Fire' => fire_severity,
+      'Police' => police_severity,
+      'Medical' => medical_severity
+    }
+  end
+
   def assign_available_responders!
     return if resolved_at.present?
     assigned = []
-    assigned << Responder.request_responders_for('Fire', fire_severity)
-    assigned << Responder.request_responders_for('Police', police_severity)
-    assigned << Responder.request_responders_for('Medical', medical_severity)
+    severities_hash.each do |key, value|
+      assigned << Responder.request_responders_for(key, value)
+    end
 
     assigned.flatten.each do |x|
       next unless x.present?
