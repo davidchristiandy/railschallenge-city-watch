@@ -9,6 +9,10 @@ class Emergency < ActiveRecord::Base
   after_create :assign_available_responders!
   before_update :reassign_responders!
 
+  # returns a summary of how many emergencies got full response compared to
+  # current existing emergencies.
+  #
+  # @return array
   def self.full_responses
     emergencies, full = all, 0
     emergencies.each do |x|
@@ -49,6 +53,9 @@ class Emergency < ActiveRecord::Base
     assigned_capacity >= police_severity
   end
 
+  # Sugar method for checking all severities.
+  #
+  # @return boolean
   def all_severities_fulfilled?
     fire_severity_fulfilled? &&
       medical_severity_fulfilled? &&
@@ -77,6 +84,7 @@ class Emergency < ActiveRecord::Base
     }
   end
 
+  # Search available responders for this emergency optimistically.
   def assign_available_responders!
     return if resolved_at.present?
     assigned = []
@@ -92,6 +100,7 @@ class Emergency < ActiveRecord::Base
     update_column :full_response, all_severities_fulfilled?
   end
 
+  # handle responders reassigning when severities are updated.
   def reassign_responders!
     responders.delete_all
     return if resolved_at.present?
