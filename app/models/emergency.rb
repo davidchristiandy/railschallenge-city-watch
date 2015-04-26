@@ -6,7 +6,6 @@ class Emergency < ActiveRecord::Base
 
   has_many :responders
 
-  # TODO: change this to after save to handle update actions
   after_create :assign_available_responders!
   before_update :reassign_responders!
 
