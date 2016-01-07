@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   before_action :resource_not_found, only: [:new, :edit, :destroy]
 
   def new
+    
   end
 
   def edit
